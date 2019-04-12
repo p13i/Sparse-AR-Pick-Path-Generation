@@ -39,4 +39,4 @@ The format of the `output.json` file should be very simple and intuitive. Please
 
 ## Example visualization
 
-![Example](./example.png)
+![Example](img/example.png)

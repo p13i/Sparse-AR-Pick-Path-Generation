@@ -3,8 +3,8 @@ try:
 except ImportError:
     import tkinter as tk
 
-from constants import SHELVE_CELL, NAVIGABLE_CELL, OBSTACLE_CELL
-import utils
+from src.constants import SHELVE_CELL, NAVIGABLE_CELL, OBSTACLE_CELL
+from src import utils
 import json
 import os
 import logging
@@ -76,7 +76,7 @@ def render():
     # Draw obstacles, shelves, and navigable cells
     for r in range(gt_library_grid_warehouse.num_rows):
         for c in range(gt_library_grid_warehouse.num_cols):
-            cell = gt_library_grid_warehouse.get_cell(r, c)
+            cell = gt_library_grid_warehouse.get_cell_type(r, c)
 
             # Get the right cell color based on the cell's type
             if cell is SHELVE_CELL:
