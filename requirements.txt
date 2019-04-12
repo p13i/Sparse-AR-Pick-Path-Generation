@@ -3,3 +3,6 @@ gt-tsp==0.0.3
 networkx==2.1
 numpy==1.14.1
 typing==3.6.4
+jupyter
+prompt-toolkit==1.0.15
+Pillow

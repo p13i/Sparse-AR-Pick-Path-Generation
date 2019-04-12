@@ -38,6 +38,8 @@
       [0,0,0,0,0,0,0,0,0,0,0,0],
       [0,0,0,0,0,0,0,0,0,0,0,0]
     ],
+    "sourceCell": [24, 0],
+    "totalNumColumnsInGrid": 21,
     "columnTagsToNavigationGridCoordinates": {
       "A-1": [18, 0],
       "A-2": [18, 3],

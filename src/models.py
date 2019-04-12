@@ -1,6 +1,6 @@
 import itertools
 import numpy as np
-from . import utils
+from src import utils
 import logging
 import os
 import json
@@ -9,7 +9,7 @@ from numpy import uint8 as _DEFAULT_INT_DTYPE
 from typing import Tuple
 
 logger = logging.getLogger(os.path.basename(__file__))
-logger = utils.configure_logger(logger)
+logger = utils.logging.configure_logger(logger)
 
 WAREHOUSE_JSON_FILE_FORMAT_VERSION = '2.0'
 
@@ -19,6 +19,7 @@ class NavigationGridCellTypes(object):
     OBSTACLE_CELL = _DEFAULT_INT_DTYPE(1)
     SHELVE_CELL = _DEFAULT_INT_DTYPE(2)
     NP_DTYPE = _DEFAULT_INT_DTYPE
+
 
 Coordinate = Tuple[int, int]
 
@@ -59,16 +60,20 @@ class Book(object):
 
 
 class GTLibraryGridWarehouse(object):
-    def __init__(self, dimensions, navigation_grid, column_tags_to_navigation_grid_coordinates, book_dicts):
+    def __init__(self,
+                 source_cell,
+                 dimensions,
+                 total_num_columns_in_grid,
+                 navigation_grid,
+                 column_tags_to_navigation_grid_coordinates,
+                 book_dicts):
         """ TODO: Clean up this method """
+        self.source_cell = source_cell
 
         self.dimensions = dimensions
 
         # THe number of columns in the grid. Each column houses 5 shelves. Each shelve houses one book.
-        # 7 = Number of aisles
-        # 3 = Number of columns per aisle
-        # TODO: Don't hard code these values. Maybe pull from JSON.
-        self.total_num_columns_in_grid = 7 * 3
+        self.total_num_columns_in_grid = total_num_columns_in_grid
 
         # Make sure the dimensions provided match those actually of the navigation grid
         self.navigation_grid = np.array(navigation_grid, dtype=NavigationGridCellTypes.NP_DTYPE)
@@ -183,7 +188,7 @@ class GTLibraryGridWarehouse(object):
                         continue
 
                     # If the distance between central search beam and offset coordinates are less than the radius...
-                    if utils.minimum_distance(central_search_beam_path, (new_r, new_c)) <= radius:
+                    if utils.distance.minimum_distance(central_search_beam_path, (new_r, new_c)) <= radius:
                         # And the offset coordinates are not navigable, then...
                         if self.get_cell_type(new_r, new_c) is not NavigationGridCellTypes.NAVIGABLE_CELL:
                             # Indicate that this particular search beam is not a clear shot
@@ -204,8 +209,10 @@ class GTLibraryGridWarehouse(object):
         layout = warehouse_data['warehouseLayout']
 
         return GTLibraryGridWarehouse(
+            source_cell=tuple(layout['sourceCell']),
             dimensions=(layout['numRows'], layout['numCols']),
             navigation_grid=layout['navigationGrid'],
+            total_num_columns_in_grid=layout['totalNumColumnsInGrid'],
             column_tags_to_navigation_grid_coordinates=layout['columnTagsToNavigationGridCoordinates'],
             book_dicts=warehouse_data['books'],
         )
@@ -262,39 +269,39 @@ class GTLibraryGridWarehouse(object):
             # Then, book to the cell above
             return (book_coordinate_r - 1, book_coordinate_c)
 
-    def get_subgraph_on_book_locations(gt_library_warehouse, book_locations, source_location):
+    def get_subgraph_on_book_locations(self, book_locations):
         """
         Given a list of book locations, this method produces the sub-graph on the navigation grid of these book locations.
         """
 
         # Ensure the source cell is navigable
-        assert gt_library_warehouse.get_cell_type(source_location[0],
-                                                  source_location[1]) == NavigationGridCellTypes.NAVIGABLE_CELL, \
+        assert self.get_cell_type(self.source_cell[0],
+                                  self.source_cell[1]) == NavigationGridCellTypes.NAVIGABLE_CELL, \
             "Source must be navigable."
 
         # Ensure all the books are on shelves
         for book_location_r, book_location_c in book_locations:
-            assert gt_library_warehouse.get_cell_type(book_location_r,
-                                                      book_location_c) == NavigationGridCellTypes.SHELVE_CELL, \
+            assert self.get_cell_type(book_location_r,
+                                      book_location_c) == NavigationGridCellTypes.SHELVE_CELL, \
                 "Book must be on a shelve."
 
-        G_library = gt_library_warehouse.navigation_grid_as_graph()
+        G_library = self.navigation_grid_as_graph()
 
         G_subgraph = nx.MultiDiGraph()
-        G_subgraph.add_node(source_location)
+        G_subgraph.add_node(self.source_cell)
         G_subgraph.add_nodes_from(book_locations)
 
         # Connect each book to each other book
         for location1, location2 in itertools.combinations(G_subgraph.nodes, 2):
-            if location1 == source_location:
+            if location1 == self.source_cell:
                 cell1_location = location1
             else:
-                cell1_location = gt_library_warehouse.get_navigable_cell_coordinate_near_book(location1)
+                cell1_location = self.get_navigable_cell_coordinate_near_book(location1)
 
-            if location2 == source_location:
+            if location2 == self.source_cell:
                 cell2_location = location2
             else:
-                cell2_location = gt_library_warehouse.get_navigable_cell_coordinate_near_book(location2)
+                cell2_location = self.get_navigable_cell_coordinate_near_book(location2)
 
             def map_so(x, a, b, c, d):
                 """ https://stackoverflow.com/questions/345187/math-mapping-numbers """
@@ -338,7 +345,7 @@ class GTLibraryGridWarehouse(object):
 
         return G_subgraph
 
-    def get_pick_path_in_library(self, optimal_pick_path_locations, source_coordinate):
+    def get_pick_path_in_library(self, optimal_pick_path_locations):
         """ Given the TSP shelve locations, this method returns the actual cell-by-cell pick path in the warehouse. """
 
         G_library = self.navigation_grid_as_graph()
@@ -350,23 +357,23 @@ class GTLibraryGridWarehouse(object):
             n1 = optimal_pick_path_locations[i]
             n2 = optimal_pick_path_locations[i + 1]
 
-            if n1 == source_coordinate:
-                c1 = source_coordinate
+            if n1 == self.source_cell:
+                c1 = self.source_cell
             else:
                 c1 = self.get_navigable_cell_coordinate_near_book(n1)
 
-            if n2 == source_coordinate:
-                c2 = source_coordinate
+            if n2 == self.source_cell:
+                c2 = self.source_cell
             else:
                 c2 = self.get_navigable_cell_coordinate_near_book(n2)
 
             # Use dijkstra's algorithm to get the best path in the library
             path = nx.dijkstra_path(G_library, c1, c2)
 
-            if n1 != source_coordinate:
+            if n1 != self.source_cell:
                 path = [n1] + path
 
-            if n2 != source_coordinate:
+            if n2 != self.source_cell:
                 path = path + [n2]
 
             optimal_pick_paths_in_library.append(path)
@@ -410,21 +417,21 @@ class GTLibraryGridWarehouse(object):
 
             i = farthest_clear_shot_index + 1
 
-        shortcut_path = cell_by_cell_book_to_book_path[:2] + shortcut_path + cell_by_cell_book_to_book_path[-1:]
+        shortcut_path = cell_by_cell_book_to_book_path[:1] + shortcut_path + cell_by_cell_book_to_book_path[-1:]
 
         logger.debug('Path now has %d cells.' % len(shortcut_path))
 
         return shortcut_path
 
-    def reintroduce_duplicate_column_locations(self, books_and_locations, source, optimal_pick_path):
-        locations_to_books = {source: []}
+    def reintroduce_duplicate_column_locations(self, books_and_locations, optimal_pick_path):
+        locations_to_books = {self.source_cell: []}
         for book, location in books_and_locations:
             if location not in locations_to_books:
                 locations_to_books[location] = []
             locations_to_books[location].append(book)
 
         books = [None]
-        new_path = [source]
+        new_path = [self.source_cell]
         for location in optimal_pick_path:
             # Introduce the location to the new path for how many ever copies of the location are in the path
             for book in locations_to_books[location]:
@@ -432,7 +439,7 @@ class GTLibraryGridWarehouse(object):
                 new_path.append(location)
 
         books.append(None)
-        new_path.append(source)
+        new_path.append(self.source_cell)
 
         return tuple(books), tuple(new_path)
 
@@ -466,16 +473,3 @@ class GTLibraryGridWarehouse(object):
             'orderedBooksAndLocations': ordered_books_and_locations,
             'orderedPickPath': ordered_pick_path,
         }
-
-
-# class PickPathGenerator(object):
-#     def __init__(self, gt_library_warehouse: GTLibraryGridWarehouse, books_per_pick_path: int, source: Coordinate):
-#         self.gt_library_warehouse = gt_library_warehouse
-#         self.books_per_pick_path = books_per_pick_path
-#         self.source = source
-#
-#     def set_warehouse(self, warehouse):
-#         self._warehouse = warehouse
-#         return self
-#
-#     def _select_unordered_books_for_(self, books_per_pick_path):

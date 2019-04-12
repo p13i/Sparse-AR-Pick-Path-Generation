@@ -3,7 +3,7 @@ try:
 except ImportError:
     import tkinter as tk
 
-from src.constants import SHELVE_CELL, NAVIGABLE_CELL, OBSTACLE_CELL
+from src.models import NavigationGridCellTypes, GTLibraryGridWarehouse
 from src import utils
 import json
 import os
@@ -79,11 +79,11 @@ def render():
             cell = gt_library_grid_warehouse.get_cell_type(r, c)
 
             # Get the right cell color based on the cell's type
-            if cell is SHELVE_CELL:
+            if cell == NavigationGridCellTypes.SHELVE_CELL:
                 color = Colors.SHELVE_CELL
-            elif cell is NAVIGABLE_CELL:
+            elif cell == NavigationGridCellTypes.NAVIGABLE_CELL:
                 color = Colors.NAVIGABLE_CELL
-            elif cell is OBSTACLE_CELL:
+            elif cell == NavigationGridCellTypes.OBSTACLE_CELL:
                 color = Colors.OBSTACLE_CELL
             else:
                 raise ValueError('Unknown cell type %s' % str(cell))
@@ -275,7 +275,7 @@ if __name__ == '__main__':
     # Setup all global variables used by Tkinter callbacks later on
 
     global gt_library_grid_warehouse
-    gt_library_grid_warehouse = utils.get_warehouse('warehouse.json')
+    gt_library_grid_warehouse = GTLibraryGridWarehouse.from_file('data/warehouse.json')
 
     global canvas_width, canvas_height
     canvas_width = gt_library_grid_warehouse.num_cols * SQUARE_SIDE_LENGTH_PX

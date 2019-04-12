@@ -1,4 +1,5 @@
-from ._distance import _euclidian_distance
+from .distance import _euclidian_distance
+
 
 def assert_library_pick_path_is_proper(optimal_pick_path_in_library, optimal_pick_path, source):
     # Ensure the start and end positions are proper
