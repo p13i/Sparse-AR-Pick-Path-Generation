@@ -25,6 +25,9 @@ def adjust_path(path, by_px: int, direction='right'):
     # Rotate about the original point by the adjustment angle
     new_path_end = geometry.transform(path_end, new_path_end, end_adjustment_angle_rad)
 
+    if any(np.isnan(v) for arr in [new_path_start, new_path_end] for v in arr):
+        a = 42
+
     return new_path_start, new_path_end
 
 

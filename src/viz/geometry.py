@@ -72,6 +72,9 @@ def calculate_point_on_path(path, ratio_onto_path: float = None, distance_onto_p
     path_start = np.asarray(path[0], dtype=np.int_)
     path_end = np.asarray(path[1], dtype=np.int_)
 
+    if np.array_equal(path_start, path_end):
+        return np.array(path_start)
+
     v = (path_end - path_start)
     unit_vector = v / np.linalg.norm(v, ord=2)
 
@@ -82,4 +85,9 @@ def calculate_point_on_path(path, ratio_onto_path: float = None, distance_onto_p
     else:
         unit_vector_multiplier = distance_onto_path
 
-    return path_start + unit_vector * unit_vector_multiplier
+    point = path_start + unit_vector * unit_vector_multiplier
+
+    if any(np.isnan(v) for v in point):
+        a = 42
+
+    return point

@@ -16,7 +16,7 @@ logger = utils.logging.configure_logger(logger)
 PICK_PATH_FILE_FORMAT_VERSION = '2.0'
 
 # The length of a side on each square in the Tkinter window
-SQUARE_SIDE_LENGTH_PX = 50  # best: 35
+SQUARE_SIDE_LENGTH_PX = 70  # best: 35
 
 # Width of the gridlines
 GRID_LINE_WIDTH = 5
@@ -45,6 +45,7 @@ class Colors(str):
     """
 
     # Graphic colors
+    SOURCE_CELL = '#0f0'        # green
     NAVIGABLE_CELL = '#fff'     # white
     OBSTACLE_CELL = '#aaa'      # light gray
     SHELVE_CELL = '#ffcc00'     # yellow-orange
@@ -118,11 +119,19 @@ def render_gt_library_grid_warehouse(
 
     logger.debug('Drew row lines.')
 
+    source_cell_r, source_cell_c = gt_library_grid_warehouse.source_cell
+    canvas.rectangle([
+        (source_cell_c * SQUARE_SIDE_LENGTH_PX, source_cell_r * SQUARE_SIDE_LENGTH_PX),
+        ((source_cell_c + 1) * SQUARE_SIDE_LENGTH_PX, (source_cell_r + 1) * SQUARE_SIDE_LENGTH_PX)],
+        fill=Colors.SOURCE_CELL,
+    )
+
     if pick_path:
         # Get pick path to be rendered
         ordered_pick_path = pick_path['pickPathInformation']['orderedPickPath']
 
         chevron_count = 0
+
         # Draw chevrons and path direction lines
         for path_component in ordered_pick_path:
             cell_by_cell_path_to_target_book_location = path_component['cellByCellPathToTargetBookLocation']
@@ -170,7 +179,7 @@ def render_gt_library_grid_warehouse(
                 path_end = ((next_cell_c + 0.5) * SQUARE_SIDE_LENGTH_PX, (next_cell_r + 0.5) * SQUARE_SIDE_LENGTH_PX)
 
                 path = path_start, path_end
-                path = viz.path.adjust_path(path, by_px=SQUARE_SIDE_LENGTH_PX // 10, direction='right')
+                path = viz.path.adjust_path(path, by_px=SQUARE_SIDE_LENGTH_PX // 5, direction='right')
 
 
                 # Draw line between these two points
@@ -223,7 +232,7 @@ def render_gt_library_grid_warehouse(
         (TEXT_PADDING_LEFT_PX, canvas_height - LEGEND_HEIGHT_PX - DEFAULT_TEXT_HEIGHT_PX / 2),
         # anchor=tk.W,
         fill=Colors.TITLE_FONT,
-        font=ImageFont.load_default(),
+        font=ImageFont.load_default().font,
         text=title_text)
 
     logger.debug('Drew title.')

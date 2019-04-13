@@ -17,16 +17,16 @@ __file__ = inspect.getfile(inspect.currentframe())
 logger = logging.getLogger(os.path.basename(__file__))
 logger = utils.logging.configure_logger(logger)
 
+BOOKS_PER_PICK_PATH = 10
+
 while True:
     # Load the warehouse object from the JSON file
     gt_library_warehouse = GTLibraryGridWarehouse.from_file('data/warehouse.json')
 
-    books_per_pick_path = 1
-
-    logger.debug('Choosing %d books at random.' % books_per_pick_path)
+    logger.debug(f'Choosing {BOOKS_PER_PICK_PATH} books at random.')
     unordered_books = np.random.choice(
         a=gt_library_warehouse.books,
-        size=books_per_pick_path,
+        size=BOOKS_PER_PICK_PATH,
         replace=False,
     )
 
