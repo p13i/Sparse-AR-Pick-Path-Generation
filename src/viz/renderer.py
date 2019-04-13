@@ -245,4 +245,4 @@ def render_gt_library_grid_warehouse(
     output_file_path = os.path.join('tmp', str(datetime.datetime.now().timestamp()) + '.png')
     im.save(output_file_path, format='png', compress_level=0)
 
-    return output_file_path
+    return (im, output_file_path)

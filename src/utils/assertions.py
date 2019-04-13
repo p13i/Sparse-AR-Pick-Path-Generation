@@ -1,7 +1,11 @@
 from .distance import _euclidian_distance
 
 
-def assert_library_pick_path_is_proper(optimal_pick_path_in_library, optimal_pick_path, source):
+def assert_variables_have_correct_lengths(unordered_books, ordered_books, ordered_locations):
+    # The optimal pick path has two more source locations (source, ..., source)
+    assert len(unordered_books) == len(ordered_books) - 2 == len(ordered_locations) - 2
+
+def assert_correct_library_pick_path_format(optimal_pick_path_in_library, optimal_pick_path, source):
     # Ensure the start and end positions are proper
     for i, pick_path in enumerate(optimal_pick_path_in_library):
         expected_path_beginning = source if i == 0 else optimal_pick_path[i]
