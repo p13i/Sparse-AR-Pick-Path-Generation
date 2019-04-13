@@ -8,6 +8,7 @@ from src import utils
 import os
 from PIL import Image, ImageDraw, ImageFont
 from src import viz
+import datetime
 
 logger = logging.getLogger(os.path.basename(__file__))
 logger = utils.logging.configure_logger(logger)
@@ -229,6 +230,10 @@ def render_gt_library_grid_warehouse(
 
     logger.info('Finished render.')
 
-    im.save('test.png', format='png', compress_level=0)
+    if not os.path.exists('tmp'):
+        os.makedirs('tmp')
 
-    return 'test.png'
+    output_file_path = os.path.join('tmp', str(datetime.datetime.now().timestamp()) + '.png')
+    im.save(output_file_path, format='png', compress_level=0)
+
+    return output_file_path
