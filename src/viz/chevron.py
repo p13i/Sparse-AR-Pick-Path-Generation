@@ -1,5 +1,7 @@
 import numpy as np
 from . import geometry
+from src.utils import distance
+from src.utils.numpy_decorators import return_list_of_tuples, return_tuple
 
 
 def get_chevron_angle_transform_for_coordinates(a, b):
@@ -7,6 +9,7 @@ def get_chevron_angle_transform_for_coordinates(a, b):
     return geometry.angle(a, b) + (np.pi / np.float_(2))
 
 
+@return_list_of_tuples
 def get_transformed_chevron(origin, transform_angle, square_side_length):
     """ Creates coordinates for a triangle in the given direction centered at the given origin. """
 
@@ -29,6 +32,13 @@ def get_transformed_chevron(origin, transform_angle, square_side_length):
     b = geometry.transform(origin, b, transform_angle)
     c = geometry.transform(origin, c, transform_angle)
 
-    transformed_triangle_coordinates = (a, b, c)
+    return np.array((a, b, c))
 
-    return transformed_triangle_coordinates
+
+@return_list_of_tuples
+def translate_polygon_to(polygon, to_centroid):
+    polygon_centroid = geometry.centroid(polygon)
+
+    translation_vector = to_centroid - polygon_centroid
+
+    return polygon + translation_vector

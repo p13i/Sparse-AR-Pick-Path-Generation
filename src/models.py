@@ -190,7 +190,7 @@ class GTLibraryGridWarehouse(object):
                     # If the distance between central search beam and offset coordinates are less than the radius...
                     if utils.distance.minimum_distance(central_search_beam_path, (new_r, new_c)) <= radius:
                         # And the offset coordinates are not navigable, then...
-                        if self.get_cell_type(new_r, new_c) is not NavigationGridCellTypes.NAVIGABLE_CELL:
+                        if self.get_cell_type(new_r, new_c) != NavigationGridCellTypes.NAVIGABLE_CELL:
                             # Indicate that this particular search beam is not a clear shot
                             return False
 
@@ -406,10 +406,6 @@ class GTLibraryGridWarehouse(object):
                 if self.is_clear_shot(current_cell, proposed_shortcut_cell):
                     # Keep looking forward
                     farthest_clear_shot_index = j
-                # else:
-                #     # The clear shot has ended, so set the variable one back and shortcut the path
-                #     farthest_clear_shot_index -= 1
-                #     break
 
                 j += 1
 
@@ -417,7 +413,7 @@ class GTLibraryGridWarehouse(object):
 
             i = farthest_clear_shot_index + 1
 
-        shortcut_path = cell_by_cell_book_to_book_path[:1] + shortcut_path + cell_by_cell_book_to_book_path[-1:]
+        shortcut_path = cell_by_cell_book_to_book_path[:2] + shortcut_path + cell_by_cell_book_to_book_path[-1:]
 
         logger.debug('Path now has %d cells.' % len(shortcut_path))
 
@@ -443,7 +439,8 @@ class GTLibraryGridWarehouse(object):
 
         return tuple(books), tuple(new_path)
 
-    def get_pick_path_as_dict(self, unordered_books, unordered_books_locations, ordered_books,
+    def get_pick_path_as_dict(self, path_id, path_type,
+                              unordered_books, unordered_books_locations, ordered_books,
                               ordered_locations_optimal,
                               optimal_pick_path_in_library):
         unordered_books_and_locations = [{'book': book.as_dict(), 'location': location} for book, location in
@@ -469,7 +466,12 @@ class GTLibraryGridWarehouse(object):
             })
 
         return {
-            'unorderedBooksAndLocations': unordered_books_and_locations,
-            'orderedBooksAndLocations': ordered_books_and_locations,
-            'orderedPickPath': ordered_pick_path,
+            'pathId': path_id,
+            'pathType': path_type,
+            'pickPathInformation': {
+                'unorderedBooksAndLocations': unordered_books_and_locations,
+                'orderedBooksAndLocations': ordered_books_and_locations,
+                'orderedPickPath': ordered_pick_path,
+            }
         }
+

@@ -1,4 +1,13 @@
 import numpy as np
+from src.utils import distance
+from src.utils.numpy_decorators import return_list_of_tuples, return_tuple
+
+
+def centroid(polygon):
+    x_points = [point[0] for point in polygon]
+    y_points = [point[1] for point in polygon]
+    c = (np.average(x_points), np.average(y_points))
+    return np.asarray(c, dtype=np.int_)
 
 
 def angle(a, b):
@@ -49,3 +58,28 @@ def transform(origin: tuple, coordinates: tuple, theta_rad: float) -> tuple:
     # Provide a tuple back out
     return tuple(coordinates)
 
+
+@return_tuple
+def calculate_point_on_path(path, ratio_onto_path: float = None, distance_onto_path: float = None):
+
+    if ratio_onto_path is None:
+        assert distance_onto_path is not None
+    elif distance_onto_path is None:
+        assert ratio_onto_path is not None
+    else:
+        assert ratio_onto_path is not None and distance_onto_path is not None
+
+    path_start = np.asarray(path[0], dtype=np.int_)
+    path_end = np.asarray(path[1], dtype=np.int_)
+
+    v = (path_end - path_start)
+    unit_vector = v / np.linalg.norm(v, ord=2)
+
+    # If only the ratio is defined, then compute the real distance
+    if ratio_onto_path is not None:
+        path_length = distance._euclidian_distance(*path)
+        unit_vector_multiplier = path_length * ratio_onto_path
+    else:
+        unit_vector_multiplier = distance_onto_path
+
+    return path_start + unit_vector * unit_vector_multiplier
